@@ -34,9 +34,7 @@ export class TalkingComponent implements OnInit, OnDestroy {
         'coral', 'cornflowerblue', 'darkcyan', 'darkgoldenrod', ];
     public userNameColors = new Map();
     public showScrollDown = false;
-    public newMessages = false;
     private noMoreMessages = false;
-    public onBottom = true;
 
     constructor(
         private route: ActivatedRoute,
@@ -51,12 +49,8 @@ export class TalkingComponent implements OnInit, OnDestroy {
             - window.innerHeight) / window.innerHeight;
         if (belowWindowPercent > 0.8) {
             this.showScrollDown = true;
-        } else if (belowWindowPercent === 0) {
-            this.onBottom = true;
-            this.newMessages = false;
         } else {
             this.showScrollDown = false;
-            this.onBottom = false;
         }
         if (document.documentElement.scrollTop === 0 && !this.noMoreMessages) {
             this.oldHeight = document.documentElement.offsetHeight;
@@ -112,19 +106,14 @@ export class TalkingComponent implements OnInit, OnDestroy {
                     }
                     t.sender.avatarURL = Values.fileAddress + t.sender.headImgFileKey;
                 });
-                if (typeof this.messages !== 'undefined' && messages.length > 0) {
-                    if (messages[0].id === this.messages[0].id) {
-                        this.noMoreMessages = true;
-                    }
-                    if (!this.onBottom && messages[messages.length - 1].content !== this.messages[this.messages.length - 1].content) {
-                        this.newMessages = true;
-                    }
+                if (typeof this.messages !== 'undefined' && messages.length > 0 && messages[0].id === this.messages[0].id) {
+                    this.noMoreMessages = true;
                 }
                 this.messages = messages;
-                if (getDown && this.onBottom) {
+                if (getDown && !this.showScrollDown) {
                     setTimeout(() => {
                         this.scrollBottom(true);
-                    }, 0);
+                    }, 100);
                 } else if (!getDown) {
                     setTimeout(() => {
                         window.scroll(0, document.documentElement.offsetHeight - this.oldHeight);
@@ -157,6 +146,7 @@ export class TalkingComponent implements OnInit, OnDestroy {
     private finishUpload() {
         this.uploading = false;
         this.progress = 0;
+        this.scrollBottom(true);
     }
 
     private scrollBottom(smooth: boolean) {
@@ -179,10 +169,14 @@ export class TalkingComponent implements OnInit, OnDestroy {
         tempMessage.senderId = AppComponent.me.id;
         tempMessage.local = true;
         this.messages.push(tempMessage);
+        this.messageAmount++;
         this.content = AES.encrypt(this.content, this.conversation.aesKey).toString();
         this.apiService.SendMessage(this.conversation.id, this.content)
             .subscribe(() => { });
         this.content = '';
+        setTimeout(() => {
+            this.scrollBottom(true);
+        }, 10);
         document.getElementById('chatInput').focus();
     }
 
@@ -193,9 +187,9 @@ export class TalkingComponent implements OnInit, OnDestroy {
     public togglePanel(): void {
         this.showPanel = !this.showPanel;
         if (this.showPanel) {
-            window.scroll(0, document.documentElement.scrollTop + 105);
-        } else {
-            window.scroll(0, document.documentElement.scrollTop - 105);
+            setTimeout(() => {
+                this.scrollBottom(false);
+            }, 0);
         }
     }
 

@@ -62,7 +62,7 @@ export class ConversationsComponent implements OnInit, OnDestroy {
                 });
                 component.info = info;
                 component.cache.UpdateConversations(info);
-                if (AppComponent.CurrentNav !== null) {
+                if (AppComponent.CurrentApp !== null) {
                     AppComponent.CurrentNav.ngOnInit();
                 }
                 if (callback != null) {
